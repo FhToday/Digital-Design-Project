@@ -1,0 +1,57 @@
+`timescale 1ns / 1ps
+
+//in: input by button(pressed is 1)
+module key(clk, rst, in, out);
+input clk;
+input rst;
+input in;
+output reg out;
+reg [19:0] delay_cnt;
+wire key_scan;
+wire key_low;
+reg key_samp;
+reg key_samp_r;
+reg key_rst;
+reg key_rst_r;
+always @(posedge clk or negedge rst)
+    begin
+        if(!rst) key_samp <= 1'b1;
+        else key_samp <= in;
+    end    
+  
+  always @(posedge clk or negedge rst) 
+    begin
+        if(!rst) key_samp_r <= 1'b1;
+        else key_samp_r <= key_samp;
+    end
+    
+  assign key_scan = key_samp_r & (~key_samp);  
+        
+ always @(posedge clk or negedge rst)  
+    begin
+        if(!rst) delay_cnt <= 20'h0;
+            else if(key_scan) delay_cnt <= 20'h0;
+            else delay_cnt <= delay_cnt + 1'b1;
+    end
+  
+ always @(posedge clk or negedge rst)   
+    begin
+        if(!rst) key_rst <= 1'b1;
+            else if(delay_cnt == 20'hfffff) key_rst <= in;
+    end
+
+ always @(posedge clk or negedge rst) 
+    begin
+        if(!rst) key_rst_r <= 1'b1;
+        else key_rst_r <= key_rst;
+    end
+                    
+ assign key_low = key_rst_r & (~key_rst);   
+  
+ always @(posedge clk or negedge rst) 
+ begin         
+    if(!rst) out <= 1'b1;
+         else if(key_low) out <= ~out;
+         else out <= out;
+ end                    
+endmodule
